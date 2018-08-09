@@ -1,0 +1,29 @@
+{
+	"name": "xutengx/cache",
+	"description": "cache",
+	"keywords": [
+		"cache",
+		"redis",
+		"file",
+		"xuteng",
+		"gaara"
+	],
+	"license": "MIT",
+	"type": "library",
+	"authors": [
+		{
+			"name": "xuteng",
+			"email": "68822684@qq.com"
+		}
+	],
+	"require": {
+		"php": ">=7.1.0",
+		"ext-redis": "*",
+		"xutengx/contracts": "*"
+	},
+	"autoload": {
+		"psr-4": {
+			"Gaara\\Cache\\": "src/"
+		}
+	}
+}
