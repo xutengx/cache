@@ -90,6 +90,58 @@ class File implements DriverInterface {
 
 	/**
 	 * 读取缓存
+	 * @param $handle
+	 * @return string|false
+	 */
+	protected static function getWithLock($handle) {
+		$content = '';
+		while (!feof($handle)) {//循环读取，直至读取完整个文件
+			$content .= fread($handle, 1024);
+		}
+		$expire    = (int)substr($content, 8, 12);
+		$filemtime = (int)substr($content, 20, 12);
+		$time      = static::getExpire($filemtime, $expire);
+		if ($time === 0) {
+			return false;
+		}
+		return substr($content, 32, -3);
+	}
+
+	/**
+	 * 得到一个key的剩余有效时间
+	 * @param $handle
+	 * @return int 0表示过期, -1表示无过期时间, -2表示未找到key
+	 */
+	protected static function ttlWithLock($handle): int {
+		$content = '';
+		while (!feof($handle)) {//循环读取，直至读取完整个文件
+			$content .= fread($handle, 1024);
+		}
+		$expire    = (int)substr($content, 8, 12);
+		$filemtime = (int)substr($content, 20, 12);
+		$time      = static::getExpire($filemtime, $expire);
+		if ($time === 0) {
+			return -2;
+		}
+		return $time;
+	}
+
+	/**
+	 * 设置缓存
+	 * @param $handle
+	 * @param string $value 内容
+	 * @param int $expire 过期时间
+	 * @return int 写入字符数
+	 */
+	protected static function setWithLock($handle, string $value, int $expire): int {
+		$data = "<?php\n//" . sprintf('%012d', $expire) . sprintf('%012d', time()) . $value . "\n?>";
+		rewind($handle);  // 重置指针
+		ftruncate($handle, 0); // 清空文件
+		return fwrite($handle, $data);
+	}
+
+	/**
+	 * 读取缓存
 	 * @param string $key 键
 	 * @return string|false
 	 */
@@ -98,7 +150,7 @@ class File implements DriverInterface {
 		if (is_file($filename) && $content = file_get_contents($filename)) {
 			$expire    = (int)substr($content, 8, 12);
 			$filemtime = (int)substr($content, 20, 12);
-			$time      = static::getExpire($filemtime, $expire);
+			$time      = $this->getExpire($filemtime, $expire);
 			if ($time === 0) {
 				//缓存过期删除缓存文件
 				unlink($filename);
@@ -140,7 +192,7 @@ class File implements DriverInterface {
 	 */
 	public function clear(string $key): bool {
 		$cachedir = $this->storageCachePath . $key;
-		static::recursiveDeleteDirectory($cachedir);
+		$this->recursiveDeleteDirectory($cachedir);
 		return rmdir($cachedir);
 	}
 
@@ -154,7 +206,7 @@ class File implements DriverInterface {
 		if (is_file($filename) && $content = file_get_contents($filename)) {
 			$expire    = (int)substr($content, 8, 12);
 			$filemtime = (int)substr($content, 20, 12);
-			$time      = static::getExpire($filemtime, $expire);
+			$time      = $this->getExpire($filemtime, $expire);
 			if ($time === 0) {
 				unlink($filename); //缓存过期删除缓存文件
 				return -2;
@@ -249,58 +301,6 @@ class File implements DriverInterface {
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * 读取缓存
-	 * @param $handle
-	 * @return string|false
-	 */
-	protected function getWithLock($handle) {
-		$content = '';
-		while (!feof($handle)) {//循环读取，直至读取完整个文件
-			$content .= fread($handle, 1024);
-		}
-		$expire    = (int)substr($content, 8, 12);
-		$filemtime = (int)substr($content, 20, 12);
-		$time      = static::getExpire($filemtime, $expire);
-		if ($time === 0) {
-			return false;
-		}
-		return substr($content, 32, -3);
-	}
-
-	/**
-	 * 得到一个key的剩余有效时间
-	 * @param $handle
-	 * @return int 0表示过期, -1表示无过期时间, -2表示未找到key
-	 */
-	protected function ttlWithLock($handle): int {
-		$content = '';
-		while (!feof($handle)) {//循环读取，直至读取完整个文件
-			$content .= fread($handle, 1024);
-		}
-		$expire    = (int)substr($content, 8, 12);
-		$filemtime = (int)substr($content, 20, 12);
-		$time      = static::getExpire($filemtime, $expire);
-		if ($time === 0) {
-			return -2;
-		}
-		return $time;
-	}
-
-	/**
-	 * 设置缓存
-	 * @param $handle
-	 * @param string $value 内容
-	 * @param int $expire 过期时间
-	 * @return int 写入字符数
-	 */
-	protected function setWithLock($handle, string $value, int $expire): int {
-		$data = "<?php\n//" . sprintf('%012d', $expire) . sprintf('%012d', time()) . $value . "\n?>";
-		rewind($handle);  // 重置指针
-		ftruncate($handle, 0); // 清空文件
-		return fwrite($handle, $data);
 	}
 
 }

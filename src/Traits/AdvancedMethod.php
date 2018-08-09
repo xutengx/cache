@@ -9,6 +9,21 @@ use ReflectionClass;
 trait AdvancedMethod {
 
 	/**
+	 * 反射执行任意对象的任意方法
+	 * @param string|object $obj
+	 * @param string $func
+	 * @param array $args
+	 * @return mixed
+	 * @throws \ReflectionException
+	 */
+	protected static function runFunc($obj, string $func, array $args = []) {
+		$reflectionClass = new ReflectionClass($obj);
+		$method          = $reflectionClass->getMethod($func);
+		$closure         = $method->getClosure($obj);
+		return $closure(...$args);
+	}
+
+	/**
 	 * 获取&存储
 	 * 如果键不存在时,则依据上下文生成自动键
 	 * 如果请求的键不存在时给它存储一个默认值
@@ -35,21 +50,6 @@ trait AdvancedMethod {
 		return $this->rememberEverythingWithKey($key, function() use ($obj, $func, $params) {
 			return $this->runFunc($obj, $func, $params);
 		}, $expire);
-	}
-
-	/**
-	 * 反射执行任意对象的任意方法
-	 * @param string|object $obj
-	 * @param string $func
-	 * @param array $args
-	 * @return mixed
-	 * @throws \ReflectionException
-	 */
-	protected function runFunc($obj, string $func, array $args = []) {
-		$reflectionClass = new ReflectionClass($obj);
-		$method          = $reflectionClass->getMethod($func);
-		$closure         = $method->getClosure($obj);
-		return $closure(...$args);
 	}
 
 	/**
