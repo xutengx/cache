@@ -19,7 +19,7 @@
 	"require": {
 		"php": ">=7.1.0",
 		"ext-redis": "*",
-		"xutengx/contracts": "*"
+		"xutengx/contracts": "dev-master"
 	},
 	"autoload": {
 		"psr-4": {
