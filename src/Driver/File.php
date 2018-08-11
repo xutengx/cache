@@ -36,7 +36,7 @@ class File implements DriverInterface {
 	 * @param int $mode
 	 * @return bool
 	 */
-	public static function recursiveMakeDirectory(string $dir, int $mode = 0777): bool {
+	protected static function recursiveMakeDirectory(string $dir, int $mode = 0777): bool {
 		return (is_dir(dirname($dir)) || static::recursiveMakeDirectory(dirname($dir))) ? mkdir($dir, $mode) : true;
 	}
 
