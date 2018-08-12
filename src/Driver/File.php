@@ -199,7 +199,7 @@ class File implements DriverInterface {
 	/**
 	 * 得到一个key的剩余有效时间
 	 * @param string $key
-	 * @return int 0表示过期, -1表示无过期时间, -2表示未找到key
+	 * @return int -1表示无过期时间, -2表示未找到key
 	 */
 	public function ttl(string $key): int {
 		$filename = $this->generateFilename($key);
