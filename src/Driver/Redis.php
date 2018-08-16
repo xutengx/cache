@@ -3,10 +3,10 @@
 declare(strict_types = 1);
 namespace Gaara\Cache\Driver;
 
-use Gaara\Contracts\Cache\DriverInterface;
+use Gaara\Contracts\Cache\Driver;
 use redis as redisExt;
 
-class Redis implements DriverInterface {
+class Redis implements Driver {
 
 	/**
 	 * php拓展中的redis
@@ -22,7 +22,8 @@ class Redis implements DriverInterface {
 	 * @param int $database
 	 * @param bool $persistentConnection
 	 */
-	public function __construct(string $host = '127.0.0.1', int $port = 6379, string $password = '', int $database = 0,
+	public function __construct(string $host = '127.0.0.1', int $port = 6379, string $password = null, int $database
+	= 0,
 		bool $persistentConnection = false) {
 		// 连接对象
 		$this->driver = new redisExt();
@@ -76,7 +77,7 @@ class Redis implements DriverInterface {
 	 * @param string $key
 	 * @return bool
 	 */
-	public function clear(string $key): bool {
+	public function clear(string $key = ''): bool {
 		$it   = null; /* Initialize our iterator to NULL */
 		$type = 1;
 		while ($arr_keys = $this->driver->scan($it, $key . '*', 10000)) {

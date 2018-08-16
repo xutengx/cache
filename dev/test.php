@@ -1,46 +1,37 @@
 <?php
 
 declare(strict_types = 1);
-namespace Gaara\Cache\dev;
 
-use Gaara\Cache;
-use Gaara\Cache\Driver\{
-	Redis, File
-};
+use Gaara\Cache\Driver\{File, Redis};
+use Gaara\Cache\Manager;
 
-if(!function_exists('env')){
-	function env(string $envName, $default = null){
+require_once dirname(__DIR__) . '/vendor/autoload.php';
+
+if (!function_exists('env')) {
+	function env(string $envName, $default = null) {
 		return $default;
 	}
 }
 
 class test {
 
-	public function index() {
+	public function index($value) {
+		$cacheConfig = require_once (dirname(__DIR__)) . '/config/cache.php';
 
-		/**
-			ykj-prod-public
-		 * ykj-prod-protected
-		 *
-		 * ykj-beta-public
-		 * ykj-beta-protected
-		 *
-		 * ykj-test-public
-		 * ykj-test-protected
-		 */
+		if ($cacheConfig['driver'] === 'redis') {
+			$redisConfig    = require_once (dirname(__DIR__)) . '/config/redis.php';
+			$connectionInfo = $redisConfig['connections'][$cacheConfig['redis']['connection']];
+			$dirver         = new Redis(...array_values($connectionInfo));
+		}
+		else {
+			$dirver = new File($cacheConfig['file']);
+		}
 
+		$key   = 'test';
+		$cache = new Manager($dirver);
+		$cache->set($key, $value, 30);
+		return $cache->get($key);
 
-		$redisDriver = new Redis('');
-
-		$fileDriver = new File('');
-
-		$cacheUseRedis = new Cache($redisDriver);
-
-		$cacheUseFile = new Cache($fileDriver);
-
-		$cacheUseRedis->get();
-
-		$cacheUseFile->set();
 	}
 
 }

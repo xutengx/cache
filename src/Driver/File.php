@@ -5,9 +5,9 @@ namespace Gaara\Cache\Driver;
 
 use Closure;
 use Exception;
-use Gaara\Contracts\Cache\DriverInterface;
+use Gaara\Contracts\Cache\Driver;
 
-class File implements DriverInterface {
+class File implements Driver {
 
 	/**
 	 * 缓存文件存放的绝对路径
@@ -190,10 +190,28 @@ class File implements DriverInterface {
 	 * @param string $key
 	 * @return bool
 	 */
-	public function clear(string $key): bool {
-		$cachedir = $this->storageCachePath . $key;
-		$this->recursiveDeleteDirectory($cachedir);
-		return rmdir($cachedir);
+	public function clear(string $key = ''): bool {
+		if ($key === '') {
+			$this->recursiveDeleteDirectory($this->storageCachePath);
+			return true;
+		}
+		$cacheDir = $this->storageCachePath . $key;
+		$dirName  = dirname($cacheDir);
+		$find     = str_replace($dirName . '/', '', $cacheDir);
+		if (is_dir($dirName) && $dirArray = scandir($dirName)) {
+			foreach ($dirArray as $k => $v) {
+				if ($v !== '.' && $v !== '..') {
+					if (is_dir($dirName . '/' . $v) && (strpos($v, $find) === 0)) {
+						$this->recursiveDeleteDirectory($dirName . '/' . $v);
+						rmdir($dirName . '/' . $v);
+					}
+					elseif (strpos($v, $find) === 0) {
+						unlink($dirName . '/' . $v);
+					}
+				}
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -250,7 +268,7 @@ class File implements DriverInterface {
 			return $return_value;
 		}
 		else
-			throw new Exception('Cache Increment Error!');
+			throw new Exception('Manager Increment Error!');
 	}
 
 	/**

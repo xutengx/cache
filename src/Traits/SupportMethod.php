@@ -4,9 +4,27 @@ declare(strict_types = 1);
 namespace Gaara\Cache\Traits;
 
 use Closure;
+use InvalidArgumentException;
 use ReflectionClass;
 
-trait AdvancedMethod {
+trait SupportMethod {
+	/**
+	 * 序列化.
+	 * @param mixed $value
+	 * @return string
+	 */
+	protected static function serialize($value): string {
+		return is_numeric($value) ? (string)$value : serialize($value);
+	}
+
+	/**
+	 * 反序列化.
+	 * @param string $value
+	 * @return mixed
+	 */
+	protected static function unserialize(string $value) {
+		return is_numeric($value) ? $value : unserialize($value);
+	}
 
 	/**
 	 * 反射执行任意对象的任意方法
@@ -24,32 +42,21 @@ trait AdvancedMethod {
 	}
 
 	/**
-	 * 获取&存储
-	 * 如果键不存在时,则依据上下文生成自动键
-	 * 如果请求的键不存在时给它存储一个默认值
-	 * @param mixed ...$params
-	 * @return mixed
+	 * 返回闭包函数的this指向的类名
+	 * @param Closure $closure
+	 * @return string
 	 */
-	public function remember(...$params) {
-		if (reset($params) instanceof Closure)
-			return $this->rememberClosureWithoutKey(...$params);
-		else
-			return $this->rememberEverythingWithKey(...$params);
-	}
-
-	/**
-	 * 执行某个方法并缓存, 优先读取缓存 (并非依赖注入)
-	 * @param string|object $obj 执行对象
-	 * @param string $func 执行方法
-	 * @param int $expire 缓存过期时间
-	 * @param mixed ...$params 非限定参数
-	 * @return mixed
-	 */
-	public function call($obj, string $func, int $expire = null, ...$params) {
-		$key = $this->generateKey($obj, $func, $params);
-		return $this->rememberEverythingWithKey($key, function() use ($obj, $func, $params) {
-			return $this->runFunc($obj, $func, $params);
-		}, $expire);
+	protected static function analysisClosure(Closure $closure): string {
+		ob_start();
+		var_dump($closure);
+		$info = ob_get_contents();
+		ob_end_clean();
+		$info  = str_replace([" ", "　", "\t", "\n", "\r"], '', $info);
+		$class = '';
+		\preg_replace_callback("/\[\"this\"\]=>object\((.*?)\)\#/is", function($matches) use (&$class) {
+			$class = $matches[1];
+		}, $info);
+		return $class;
 	}
 
 	/**
@@ -92,21 +99,30 @@ trait AdvancedMethod {
 	}
 
 	/**
-	 * 返回闭包函数的this指向的类名
-	 * @param Closure $closure
+	 * 生成键名
+	 * @param string|object $obj
+	 * @param string $funcName
+	 * @param array $params
 	 * @return string
 	 */
-	protected function analysisClosure(Closure $closure): string {
-		ob_start();
-		var_dump($closure);
-		$info = ob_get_contents();
-		ob_end_clean();
-		$info  = str_replace([" ", "　", "\t", "\n", "\r"], '', $info);
-		$class = '';
-		\preg_replace_callback("/\[\"this\"\]=>object\((.*?)\)\#/is", function($matches) use (&$class) {
-			$class = $matches[1];
-		}, $info);
-		return $class;
+	protected function generateKey($obj, string $funcName = '', array $params = []): string {
+		$className = is_object($obj) ? get_class($obj) : $obj;
+		$key       = ''; // default
+		if (!empty($params)) {
+			foreach ($params as $v) {
+				if (is_object($v))
+					throw new InvalidArgumentException('the object is not supported as the parameter in Manager::call. ');
+				if ($v === true)
+					$key .= '_bool-t';
+				elseif ($v === false)
+					$key .= '_bool-f';
+				else
+					$key .= '_' . gettype($v) . '-' . (is_array($v) ? serialize($v) : $v);
+			}
+			$key = '/' . md5($key);
+		}
+		$str = $className . '/' . $funcName . $key;
+		$str = is_null($this->identifier) ? $str : '@' . $this->identifier . '/' . $str;
+		return str_replace('\\', '/', $str);
 	}
-
 }

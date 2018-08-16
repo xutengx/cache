@@ -5,46 +5,57 @@ namespace Gaara\Cache;
 
 use Closure;
 use Exception;
-use Gaara\Cache\Traits\AdvancedMethod;
-use Gaara\Contracts\Cache\DriverInterface;
-use InvalidArgumentException;
+use Gaara\Cache\Traits\SupportMethod;
+use Gaara\Contracts\Cache\{Driver, Manager as CacheManagerInterface};
 
-class Cache {
+class Manager implements CacheManagerInterface {
 
-	use AdvancedMethod;
+	use SupportMethod;
 
 	protected $driver;
 	protected $expire;
 	protected $identifier;
 
 	/**
-	 * Cache constructor.
-	 * @param DriverInterface $driver
+	 * Manager constructor.
+	 * @param Driver $driver
 	 * @param int $expire
-	 * @param string $identifier
+	 * @param string $identifier 标识符, 在自动生成键名的情况下使用
 	 */
-	public function __construct(DriverInterface $driver, int $expire = 1800, string $identifier = null) {
+	public function __construct(Driver $driver, int $expire = 1800, string $identifier = null) {
 		$this->driver     = $driver;
 		$this->expire     = $expire;
 		$this->identifier = $identifier;
 	}
 
 	/**
-	 * 序列化.
-	 * @param mixed $value
-	 * @return string
+	 * 获取&存储
+	 * 如果键不存在时,则依据上下文生成自动键
+	 * 如果请求的键不存在时给它存储一个默认值
+	 * @param mixed ...$params
+	 * @return mixed
 	 */
-	protected static function serialize($value): string {
-		return is_numeric($value) ? (string)$value : serialize($value);
+	public function remember(...$params) {
+		if (reset($params) instanceof Closure)
+			return $this->rememberClosureWithoutKey(...$params);
+		else
+			return $this->rememberEverythingWithKey(...$params);
 	}
 
 	/**
-	 * 反序列化.
-	 * @param string $value
+	 * 执行某个方法并缓存, 优先读取缓存 (并非依赖注入)
+	 * @param string|object $obj 执行对象
+	 * @param string $func 执行方法
+	 * @param int $expire 缓存过期时间
+	 * @param mixed ...$params 非限定参数
 	 * @return mixed
+	 * @throws Exception
 	 */
-	protected static function unserialize(string $value) {
-		return is_numeric($value) ? $value : unserialize($value);
+	public function call($obj, string $func, int $expire = null, ...$params) {
+		$key = $this->generateKey($obj, $func, $params);
+		return $this->rememberEverythingWithKey($key, function() use ($obj, $func, $params) {
+			return $this->runFunc($obj, $func, $params);
+		}, $expire);
 	}
 
 	/**
@@ -85,6 +96,15 @@ class Cache {
 	}
 
 	/**
+	 * 查询缓存的有效期
+	 * @param string $key
+	 * @return int 0表示过期, -1表示无过期时间, -2表示未找到key
+	 */
+	public function ttl(string $key): int {
+		return $this->driver->ttl($key);
+	}
+
+	/**
 	 * 自增 (原子性)
 	 * 当$key不存在时,将以 $this->set($key, 0, -1); 初始化
 	 * @param string $key
@@ -122,7 +142,7 @@ class Cache {
 	 * @return bool
 	 * @throws Exception
 	 */
-	public function clear($obj, string $func = '', ...$params): bool {
+	public function unsetCall($obj, string $func = '', ...$params): bool {
 		$key = $this->generateKey($obj, $func, $params);
 		return $this->driver->clear($key);
 	}
@@ -132,8 +152,8 @@ class Cache {
 	 * 清除缓存并不管什么缓存键前缀，而是从缓存系统中移除所有数据，所以在使用这个方法时如果其他应用与本应用有共享缓存时需要格外注意
 	 * @return bool
 	 */
-	public function flush(): bool {
-		return $this->driver->clear('');
+	public function clear(string $key): bool {
+		return $this->driver->clear($key);
 	}
 
 	/**
@@ -141,7 +161,8 @@ class Cache {
 	 * @return string eg:redis
 	 */
 	public function getDriverName(): string {
-		return end(explode('\\', get_class($this->driver)));
+		$classNameInfo = explode('\\', get_class($this->driver));
+		return strtolower(end($classNameInfo));
 	}
 
 	/**
@@ -152,35 +173,6 @@ class Cache {
 	 */
 	public function __call(string $fun, array $par = []) {
 		return call_user_func_array([$this->driver, $fun], $par);
-	}
-
-	/**
-	 * 生成键名
-	 * @param string|object $obj
-	 * @param string $funcName
-	 * @param array $params
-	 * @return string
-	 * @throws Exception
-	 */
-	protected function generateKey($obj, string $funcName = '', array $params = []): string {
-		$className = is_object($obj) ? get_class($obj) : $obj;
-		$key       = ''; // default
-		if (!empty($params)) {
-			foreach ($params as $v) {
-				if (is_object($v))
-					throw new InvalidArgumentException('the object is not supported as the parameter in Cache::call. ');
-				if ($v === true)
-					$key .= '_bool-t';
-				elseif ($v === false)
-					$key .= '_bool-f';
-				else
-					$key .= '_' . gettype($v) . '-' . (is_array($v) ? serialize($v) : $v);
-			}
-			$key = '/' . md5($key);
-		}
-		$str = $className . '/' . $funcName . $key;
-		$str = is_null($this->identifier) ? $str : '@' . $this->identifier . '/' . $str;
-		return str_replace('\\', '/', $str);
 	}
 
 }
