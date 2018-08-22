@@ -1,9 +1,9 @@
 <?php
 
 declare(strict_types = 1);
-namespace Gaara\Cache\Driver;
+namespace Xutengx\Cache\Driver;
 
-use Gaara\Contracts\Cache\Driver;
+use Xutengx\Contracts\Cache\Driver;
 use redis as redisExt;
 
 class Redis implements Driver {

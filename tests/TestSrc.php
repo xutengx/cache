@@ -1,9 +1,10 @@
 <?php
 declare(strict_types = 1);
 
-use Gaara\Cache\Driver\{File, Redis};
-use Gaara\Cache\Manager;
-use Gaara\Contracts\Cache\{Driver, Manager as ManagerInterface};
+use Xutengx\Cache\Driver\{File, Redis};
+use Xutengx\Cache\Manager;
+use Xutengx\Contracts\Cache\Driver;
+use Xutengx\Contracts\Cache as ManagerInterface;
 use PHPUnit\Framework\TestCase;
 
 final class TestSrc extends TestCase {

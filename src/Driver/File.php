@@ -1,11 +1,11 @@
 <?php
 
 declare(strict_types = 1);
-namespace Gaara\Cache\Driver;
+namespace Xutengx\Cache\Driver;
 
 use Closure;
 use Exception;
-use Gaara\Contracts\Cache\Driver;
+use Xutengx\Contracts\Cache\Driver;
 
 class File implements Driver {
 

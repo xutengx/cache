@@ -2,8 +2,8 @@
 
 declare(strict_types = 1);
 
-use Gaara\Cache\Driver\{File, Redis};
-use Gaara\Cache\Manager;
+use Xutengx\Cache\Driver\{File, Redis};
+use Xutengx\Cache\Manager;
 
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
@@ -21,9 +21,17 @@ class test {
 		if ($cacheConfig['driver'] === 'redis') {
 			$redisConfig    = require_once (dirname(__DIR__)) . '/config/redis.php';
 			$connectionInfo = $redisConfig['connections'][$cacheConfig['redis']['connection']];
-			$dirver         = new Redis(...array_values($connectionInfo));
+
+			/**
+			 *
+			 */
+			$dirver = new Redis(...array_values($connectionInfo));
 		}
 		else {
+
+			/**
+			 *
+			 */
 			$dirver = new File($cacheConfig['file']);
 		}
 

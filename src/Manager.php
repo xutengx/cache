@@ -1,12 +1,13 @@
 <?php
 
 declare(strict_types = 1);
-namespace Gaara\Cache;
+namespace Xutengx\Cache;
 
 use Closure;
 use Exception;
-use Gaara\Cache\Traits\SupportMethod;
-use Gaara\Contracts\Cache\{Driver, Manager as CacheManagerInterface};
+use Xutengx\Cache\Traits\SupportMethod;
+use Xutengx\Contracts\Cache as CacheManagerInterface;
+use Xutengx\Contracts\Cache\Driver;
 
 class Manager implements CacheManagerInterface {
 

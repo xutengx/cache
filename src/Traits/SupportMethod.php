@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types = 1);
-namespace Gaara\Cache\Traits;
+namespace Xutengx\Cache\Traits;
 
 use Closure;
 use InvalidArgumentException;
