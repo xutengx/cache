@@ -7,7 +7,7 @@ use Xutengx\Contracts\Cache\Driver;
 use Xutengx\Contracts\Cache as ManagerInterface;
 use PHPUnit\Framework\TestCase;
 
-final class TestSrc extends TestCase {
+final class SrcTest extends TestCase {
 
 	/**
 	 * 实例化文件缓存驱动

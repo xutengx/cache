@@ -5,7 +5,7 @@ use PHPUnit\Framework\TestCase;
 
 require_once dirname(__DIR__) . '/dev/test.php';
 
-final class TestDev extends TestCase {
+final class DevTest extends TestCase {
 
 	public function testTest() {
 		$value = 'gaara';
