@@ -151,6 +151,7 @@ class Manager implements CacheManagerInterface {
 	/**
 	 * 清除当前驱动的全部缓存
 	 * 清除缓存并不管什么缓存键前缀，而是从缓存系统中移除所有数据，所以在使用这个方法时如果其他应用与本应用有共享缓存时需要格外注意
+	 * @param string $key
 	 * @return bool
 	 */
 	public function clear(string $key): bool {
