@@ -62,6 +62,18 @@ class Redis implements Driver {
 		return ($expire === -1) ? $this->driver->set($key, $value) : $this->driver->setex($key, $expire, $value);
 	}
 
+
+	/**
+	 * 设置缓存
+	 * 仅在不存在时设置缓存 set if not exists
+	 * @param string $key 键
+	 * @param string $value 值
+	 * @return bool
+	 */
+	public function setnx(string $key, string $value): bool {
+		return $this->driver->setnx($key, $value);
+	}
+
 	/**
 	 * 删除单一缓存
 	 * @param string $key 键
