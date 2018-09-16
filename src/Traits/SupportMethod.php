@@ -42,24 +42,6 @@ trait SupportMethod {
 	}
 
 	/**
-	 * 返回闭包函数的this指向的类名
-	 * @param Closure $closure
-	 * @return string
-	 */
-	protected static function analysisClosure(Closure $closure): string {
-		ob_start();
-		var_dump($closure);
-		$info = ob_get_contents();
-		ob_end_clean();
-		$info  = str_replace([" ", "　", "\t", "\n", "\r"], '', $info);
-		$class = '';
-		\preg_replace_callback("/\[\"this\"\]=>object\((.*?)\)\#/is", function($matches) use (&$class) {
-			$class = $matches[1];
-		}, $info);
-		return $class;
-	}
-
-	/**
 	 * 按键, 获取一个缓存, 若不存在, 则设置缓存后返回
 	 * @param string $key
 	 * @param mixed $value
@@ -67,7 +49,7 @@ trait SupportMethod {
 	 * @return mixed
 	 */
 	protected function rememberEverythingWithKey(string $key, $value, int $expire = null) {
-		return ($content = $this->driver->get($key)) ? $this->unserialize($content) :
+		return ($content = $this->driver->get($key)) !== false ? $this->unserialize($content) :
 			($this->set($key, $value, $expire) ? $this->get($key) : null);
 	}
 
@@ -78,8 +60,13 @@ trait SupportMethod {
 	 * @return mixed
 	 */
 	protected function rememberClosureWithoutKey(Closure $callback, int $expire = null) {
-		$class = $this->analysisClosure($callback);
 		$debug = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4);
+		foreach ($debug as $v) {
+			if ($v['function'] !== 'rememberClosureWithoutKey' && $v['function'] !== 'remember') {
+				$class = $v['class'];
+				break;
+			}
+		}
 		$func  = '__';
 		foreach ($debug as $v) {
 			// 调用类自身调用

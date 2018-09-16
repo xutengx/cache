@@ -88,6 +88,38 @@ final class SrcTest extends TestCase {
 		$this->assertFalse($Manager->rm($key), '移除一个不存在的键');
 		$this->assertNull($Manager->get($key), '获取已被移除的缓存的值');
 
+		$testArg = 33;
+		$this->assertEquals(34, $Manager->remember('tetesaaa',function() use (&$testArg) {
+			return ++$testArg;
+		}));
+		$this->assertEquals(34, $testArg);
+		$this->assertEquals(34, $Manager->remember(function() use (&$testArg) {
+			return $testArg++;
+		}));
+		$this->assertEquals(35, $testArg);
+		$this->assertEquals(35, $Manager->remember(function() use (&$testArg) {
+			return $testArg;
+		}));
+		$this->assertEquals(35, $testArg);
+		$this->assertEquals(35, $testArg++);
+		$this->assertEquals(36, $testArg);
+		$this->assertEquals(37, ++$testArg);
+
+		$this->assertEquals(38, $Manager->remember(function() use (&$testArg) {
+			return ++$testArg;
+		}));
+		$this->assertEquals(38, $testArg);
+		$this->assertEquals(0, $Manager->remember(function() use (&$testArg) {
+			$testArg = 0;
+			return $testArg;
+		}));
+		$this->assertEquals(1, $Manager->remember(function() use (&$testArg) {
+			$testArg++;
+			return $testArg;
+		}));
+
+		$this->assertEquals(1, $testArg);
+
 		$this->assertTrue($Manager->setnx($key, '55'), '仅在键不存在时,设置一个值');
 		$this->assertFalse($Manager->setnx($key, '55'), '仅在键不存在时,设置一个值');
 		$this->assertEquals($Manager->decrement($key, 1), 54, '自减一个数子类型的字符');

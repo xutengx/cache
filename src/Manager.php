@@ -23,7 +23,7 @@ class Manager implements CacheManagerInterface {
 	 * @param int $expire
 	 * @param string $identifier 标识符, 在自动生成键名的情况下使用
 	 */
-	public function __construct(Driver $driver, int $expire = 1800, string $identifier = null) {
+	public function __construct(Driver $driver, int $expire = 60, string $identifier = null) {
 		$this->driver     = $driver;
 		$this->expire     = $expire;
 		$this->identifier = $identifier;
