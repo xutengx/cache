@@ -60,13 +60,8 @@ trait SupportMethod {
 	 * @return mixed
 	 */
 	protected function rememberClosureWithoutKey(Closure $callback, int $expire = null) {
+		$class = $this->analysisClosure($callback);
 		$debug = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4);
-		foreach ($debug as $v) {
-			if ($v['function'] !== 'rememberClosureWithoutKey' && $v['function'] !== 'remember') {
-				$class = $v['class'];
-				break;
-			}
-		}
 		$func  = '__';
 		foreach ($debug as $v) {
 			// 调用类自身调用
@@ -83,6 +78,25 @@ trait SupportMethod {
 		}
 		$key = $this->generateKey($class, $func);
 		return $this->rememberEverythingWithKey($key, $callback, $expire);
+	}
+
+	/**
+	 * 返回闭包函数的this指向的类名
+	 * @param Closure $closure
+	 * @return string
+	 */
+	protected static function analysisClosure(Closure $closure): string {
+		$regex = extension_loaded('xdebug') ? '/\$this=>class(.*?)\#/is' : '/\["this"\]=>object\((.*?)\)\#/is';
+		ob_start();
+		var_dump($closure); // 此打印并非调试
+		$info = ob_get_contents();
+		ob_end_clean();
+		$info  = str_replace([" ", "　", "\t", "\n", "\r"], '', $info);
+		$class = '';
+		\preg_replace_callback($regex, function($matches) use (&$class) {
+			$class = $matches[1];
+		}, $info);
+		return $class;
 	}
 
 	/**
