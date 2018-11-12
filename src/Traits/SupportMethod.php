@@ -115,7 +115,8 @@ trait SupportMethod {
 		if (!empty($params)) {
 			foreach ($params as $v) {
 				if (is_object($v))
-					throw new InvalidArgumentException('the object is not supported as the parameter in Manager::call. ');
+					throw new InvalidArgumentException('the object is not supported as the parameter in ' .
+					                                   static::class . '::call. ');
 				if ($v === true)
 					$key .= '_bool-t';
 				elseif ($v === false)
