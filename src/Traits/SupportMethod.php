@@ -86,7 +86,10 @@ trait SupportMethod {
 	 * @return string
 	 */
 	protected static function analysisClosure(Closure $closure): string {
-		$regex = extension_loaded('xdebug') ? '/\$this=>class(.*?)\#/is' : '/\["this"\]=>object\((.*?)\)\#/is';
+		$regex = extension_loaded('xdebug') ?
+			(php_sapi_name() === 'cli') ? '/\$this=>class(.*?)\#/is' :
+				"/<i>public<\/i>'this'<fontcolor='.*?'>=&gt;<\/font><b>object<\/b>\(<i>(.*?)<\/i>\)\[/is" :
+			'/\["this"\]=>object\((.*?)\)\#/is';
 		ob_start();
 		var_dump($closure); // 此打印并非调试
 		$info = ob_get_contents();
